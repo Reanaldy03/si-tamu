@@ -60,6 +60,14 @@ class ReportExport extends Model
     }
 
     /**
+     * Get the route key for the model.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
+    }
+
+    /**
      * The user who requested this report export.
      */
     public function requestedBy(): BelongsTo

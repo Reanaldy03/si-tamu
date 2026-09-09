@@ -69,11 +69,11 @@
 - [x] Feature Tests for Master Data & Audit Immutability
 
 ### Sprint 8: Reporting Engine & Ephemeral Export
-- [ ] Report Filter & Summary Preview (`ReportController`: Synchronous preview matching search filter)
-- [ ] Ephemeral Export Engine (`ExportVisitsAction`: Streamed CSV / XLSX adapter, memory-efficient chunking, formula injection sanitization)
-- [ ] Export Lifecycle Management (`report_exports` metadata tracking)
-- [ ] Scheduled Export Cleanup Job (`php artisan sitamu:exports:cleanup`)
-- [ ] Feature Tests for Export Lifecycle & Integrity
+- [x] Report Filter & Summary Preview (`ReportController`: Synchronous preview matching search filter)
+- [x] Ephemeral Export Engine (`ExportVisitsAction`: Streamed CSV / XLSX adapter, memory-efficient chunking, formula injection sanitization)
+- [x] Export Lifecycle Management (`report_exports` metadata tracking)
+- [x] Scheduled Export Cleanup Job (`php artisan sitamu:exports:cleanup`)
+- [x] Feature Tests for Export Lifecycle & Integrity
 
 ### Sprint 9: Quality Assurance, Security Polish & Production Checklist
 - [ ] 23 Black-Box Test Scenarios (PRD.md FR-001 - FR-017)
@@ -173,7 +173,19 @@
   - `resources/views/admin/audits/index.blade.php`
   - `resources/views/admin/audits/show.blade.php`
   - `resources/views/admin/settings/edit.blade.php`
+  - `app/Application/Reporting/DTOs/ReportFilterDTO.php`
+  - `app/Application/Reporting/Queries/VisitReportQuery.php`
+  - `app/Application/Reporting/Services/FormulaSanitizer.php`
+  - `app/Application/Reporting/Writers/CsvReportWriter.php`
+  - `app/Application/Reporting/Writers/XlsxReportWriter.php`
+  - `app/Application/Reporting/Actions/ExportVisitsAction.php`
+  - `app/Http/Requests/Admin/ReportFilterRequest.php`
+  - `app/Http/Requests/Admin/ExportReportRequest.php`
+  - `app/Http/Controllers/Admin/ReportController.php`
+  - `app/Console/Commands/CleanupExpiredExportsCommand.php`
+  - `resources/views/admin/reports/index.blade.php`
   - `routes/web.php`
+  - `routes/console.php`
   - `bootstrap/app.php`
   - `tests/TestCase.php`
   - `tests/Feature/Sprint1SetupTest.php`
@@ -193,8 +205,10 @@
   - `tests/Feature/Admin/UserManagementTest.php`
   - `tests/Feature/Admin/AuditLogViewerTest.php`
   - `tests/Feature/Admin/OrganizationSettingsTest.php`
+  - `tests/Feature/Admin/ReportAndExportTest.php`
   - `tests/Feature/ExampleTest.php`
-- **Last Verified Test:** `php artisan test` (87 passed, 425 assertions OK), `php vendor/bin/pint --test` (passed), `npm run build` (passed)
-- **Active Task:** SPRINT-08 (Reporting Engine & Ephemeral Export)
+- **Last Verified Test:** `php artisan test` (97 passed, 466 assertions OK), `php vendor/bin/pint --test` (passed), `npm run build` (passed)
+- **Active Task:** SPRINT-09 (Quality Assurance, Security Polish & Production Checklist)
 - **Blockers / Open Questions:** None
+
 

@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Models\ReportExport;
 use App\Models\User;
 
 class ReportPolicy
@@ -9,7 +10,15 @@ class ReportPolicy
     /**
      * Determine whether the user can view report aggregates and preview.
      */
-    public function view(User $user): bool
+    public function viewAny(User $user): bool
+    {
+        return $user->hasPermission('reports.view');
+    }
+
+    /**
+     * Determine whether the user can view report details or preview.
+     */
+    public function view(User $user, ?ReportExport $reportExport = null): bool
     {
         return $user->hasPermission('reports.view');
     }
@@ -18,6 +27,22 @@ class ReportPolicy
      * Determine whether the user can generate and export reports.
      */
     public function export(User $user): bool
+    {
+        return $user->hasPermission('reports.export');
+    }
+
+    /**
+     * Determine whether the user can create an export request.
+     */
+    public function create(User $user): bool
+    {
+        return $user->hasPermission('reports.export');
+    }
+
+    /**
+     * Determine whether the user can download an exported file.
+     */
+    public function download(User $user, ?ReportExport $reportExport = null): bool
     {
         return $user->hasPermission('reports.export');
     }

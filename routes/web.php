@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\DepartmentController;
 use App\Http\Controllers\Admin\OrganizationSettingsController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VisitController;
 use App\Http\Controllers\Admin\VisitStatusController;
@@ -50,4 +51,9 @@ Route::middleware(['auth', 'active.user'])->prefix('admin')->name('admin.')->gro
     // Organization Settings
     Route::get('settings', [OrganizationSettingsController::class, 'edit'])->name('settings.edit');
     Route::put('settings', [OrganizationSettingsController::class, 'update'])->name('settings.update');
+
+    // Reports & Ephemeral Exports
+    Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::post('reports/export', [ReportController::class, 'export'])->name('reports.export');
+    Route::get('reports/exports/{export}/download', [ReportController::class, 'download'])->name('reports.download');
 });

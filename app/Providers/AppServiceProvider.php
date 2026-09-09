@@ -7,6 +7,7 @@ use App\Infrastructure\Identifiers\UlidPublicIdGenerator;
 use App\Models\AuditLog;
 use App\Models\Department;
 use App\Models\OrganizationSetting;
+use App\Models\ReportExport;
 use App\Models\User;
 use App\Models\Visit;
 use App\Policies\AuditLogPolicy;
@@ -38,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(OrganizationSetting::class, OrganizationSettingPolicy::class);
         Gate::policy(AuditLog::class, AuditLogPolicy::class);
+        Gate::policy(ReportExport::class, ReportPolicy::class);
 
         Gate::define('reports.view', [ReportPolicy::class, 'view']);
         Gate::define('reports.export', [ReportPolicy::class, 'export']);
