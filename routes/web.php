@@ -1,12 +1,15 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Public\GuestRegistrationController;
 use Illuminate\Support\Facades\Route;
 
 // Public guest routes
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+Route::get('/', [GuestRegistrationController::class, 'create'])->name('public.registration.create');
+Route::post('/', [GuestRegistrationController::class, 'store'])
+    ->middleware('throttle:15,1')
+    ->name('public.registration.store');
+Route::get('/kunjungan/{publicId}/sukses', [GuestRegistrationController::class, 'success'])->name('public.registration.success');
 
 // Authentication routes
 Route::middleware('guest')->group(function () {

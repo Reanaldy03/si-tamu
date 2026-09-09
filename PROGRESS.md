@@ -9,7 +9,7 @@
 - **Project Name:** SI-TAMU (Sistem Informasi Buku Tamu Digital Berbasis Web)
 - **Architecture Style:** Modular Monolith (Laravel 11, PHP 8.3+, MySQL 8.x, Blade + Tailwind CSS + Alpine.js)
 - **Primary Actors:** Guest (Public, No Account), Staff (Front-Office), Admin (Back-Office)
-- **Current Sprint:** SPRINT-04 (Authentication, Policies & Security Middlewares)
+- **Current Sprint:** SPRINT-06 (Back-Office Operations: Dashboard, Visits List & Detail)
 - **Last Updated:** 2026-09-09
 
 ---
@@ -47,11 +47,11 @@
 - [x] Authorization Feature Tests (Verifikasi STAFF ditolak 403 untuk akses Admin)
 
 ### Sprint 5: Public Guest Registration Flow
-- [ ] `GuestRegistrationController` & `StoreGuestVisitRequest` (Validation & Sanitization)
-- [ ] Layout `layouts/public.blade.php` (Clean, mobile-first, no external CDN dependencies)
-- [ ] Registration View `public/registration/create.blade.php` (Single-column, active departments, idempotency token, Alpine.js submit disabled)
-- [ ] Confirmation View `public/registration/success.blade.php` (ULID public reference, destination, timestamp, reset button)
-- [ ] Feature Tests for Public Registration, Validation Errors & Duplicate Submission Prevention
+- [x] `GuestRegistrationController` & `StoreGuestVisitRequest` (Validation & Sanitization)
+- [x] Layout `layouts/public.blade.php` (Clean, mobile-first, no external CDN dependencies)
+- [x] Registration View `public/registration/create.blade.php` (Single-column, active departments, idempotency token, Alpine.js submit disabled)
+- [x] Confirmation View `public/registration/success.blade.php` (ULID public reference, destination, timestamp, reset button)
+- [x] Feature Tests for Public Registration, Validation Errors & Duplicate Submission Prevention
 
 ### Sprint 6: Back-Office Operations (Dashboard, Visits List & Detail)
 - [ ] Shell Navigation `layouts/admin.blade.php` (Desktop sidebar, mobile drawer, topbar, role-aware navigation)
@@ -138,6 +138,12 @@
   - `app/Policies/ReportPolicy.php`
   - `app/Policies/OrganizationSettingPolicy.php`
   - `resources/views/auth/login.blade.php`
+  - `app/Http/Requests/Public/StoreGuestVisitRequest.php`
+  - `app/Http/Controllers/Public/GuestRegistrationController.php`
+  - `resources/views/layouts/public.blade.php`
+  - `resources/views/public/registration/create.blade.php`
+  - `resources/views/public/registration/success.blade.php`
+  - `resources/js/app.js`
   - `routes/web.php`
   - `bootstrap/app.php`
   - `tests/TestCase.php`
@@ -151,6 +157,8 @@
   - `tests/Feature/Audit/RecordAuditEventActionTest.php`
   - `tests/Feature/Auth/AuthenticationTest.php`
   - `tests/Feature/Auth/PolicyAuthorizationTest.php`
-- **Last Verified Test:** `php artisan test` (44 passed, 244 assertions OK), `php vendor/bin/pint --test` (passed)
-- **Active Task:** SPRINT-05 (Public Guest Registration Flow)
+  - `tests/Feature/Public/GuestRegistrationTest.php`
+  - `tests/Feature/ExampleTest.php`
+- **Last Verified Test:** `php artisan test` (50 passed, 289 assertions OK), `php vendor/bin/pint --test` (passed), `npm run build` (passed)
+- **Active Task:** SPRINT-06 (Back-Office Operations: Dashboard, Visits List & Detail)
 - **Blockers / Open Questions:** None
