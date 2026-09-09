@@ -9,7 +9,7 @@
 - **Project Name:** SI-TAMU (Sistem Informasi Buku Tamu Digital Berbasis Web)
 - **Architecture Style:** Modular Monolith (Laravel 11, PHP 8.3+, MySQL 8.x, Blade + Tailwind CSS + Alpine.js)
 - **Primary Actors:** Guest (Public, No Account), Staff (Front-Office), Admin (Back-Office)
-- **Current Sprint:** SPRINT-03 (Application Actions & Transaction Engine)
+- **Current Sprint:** SPRINT-04 (Authentication, Policies & Security Middlewares)
 - **Last Updated:** 2026-09-09
 
 ---
@@ -34,11 +34,11 @@
 - [x] Unit Tests for State Machine & ULID generation
 
 ### Sprint 3: Application Actions & Transaction Engine
-- [ ] `RegisterVisitAction` (Atomic Transaction: Idempotency token hash + Visit + StatusHistory + AuditLog)
-- [ ] `ChangeVisitStatusAction` (Atomic Transaction: `SELECT ... FOR UPDATE` + Transition Rule + History + AuditLog)
-- [ ] `RecordAuditEventAction` (Append-only sanitized business audit)
-- [ ] `CorrectVisitDataAction` (Admin-only data correction with sanitized before/after state diff)
-- [ ] Feature Tests for Transaction Boundaries & Rollback Integrity
+- [x] `RegisterVisitAction` (Atomic Transaction: Idempotency token hash + Visit + StatusHistory + AuditLog)
+- [x] `ChangeVisitStatusAction` (Atomic Transaction: `SELECT ... FOR UPDATE` + Transition Rule + History + AuditLog)
+- [x] `RecordAuditEventAction` (Append-only sanitized business audit)
+- [x] `CorrectVisitDataAction` (Admin-only data correction with sanitized before/after state diff)
+- [x] Feature Tests for Transaction Boundaries & Rollback Integrity
 
 ### Sprint 4: Authentication, Policies & Security Middlewares
 - [ ] Back-office Session Authentication (`AuthController`: Login, Logout, Rate Limiting, Session Regeneration)
@@ -120,10 +120,21 @@
   - `app/Models/AuditLog.php`
   - `app/Models/ReportExport.php`
   - `app/Models/OrganizationSetting.php`
+  - `app/Application/Visits/DTOs/RegisterVisitDTO.php`
+  - `app/Application/Visits/DTOs/ChangeVisitStatusDTO.php`
+  - `app/Application/Visits/DTOs/CorrectVisitDataDTO.php`
+  - `app/Application/Audit/Actions/RecordAuditEventAction.php`
+  - `app/Application/Visits/Actions/RegisterVisitAction.php`
+  - `app/Application/Visits/Actions/ChangeVisitStatusAction.php`
+  - `app/Application/Visits/Actions/CorrectVisitDataAction.php`
   - `tests/Feature/Sprint1SetupTest.php`
   - `tests/Unit/Domain/VisitStatusTransitionRuleTest.php`
   - `tests/Unit/Infrastructure/UlidPublicIdGeneratorTest.php`
   - `tests/Feature/DomainModelRelationsAndCastsTest.php`
-- **Last Verified Test:** `php artisan test` (22 passed, 124 assertions OK), `php vendor/bin/pint --test` (passed)
-- **Active Task:** SPRINT-03 (Application Actions & Transaction Engine)
+  - `tests/Feature/Visits/RegisterVisitActionTest.php`
+  - `tests/Feature/Visits/ChangeVisitStatusActionTest.php`
+  - `tests/Feature/Visits/CorrectVisitDataActionTest.php`
+  - `tests/Feature/Audit/RecordAuditEventActionTest.php`
+- **Last Verified Test:** `php artisan test` (32 passed, 182 assertions OK), `php vendor/bin/pint --test` (passed)
+- **Active Task:** SPRINT-04 (Authentication, Policies & Security Middlewares)
 - **Blockers / Open Questions:** None
