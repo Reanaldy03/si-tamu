@@ -112,119 +112,7 @@
     </div>
 
     <!-- Interactive Charts Section -->
-    <div 
-        x-data="{
-            initCharts() {
-                if (!window.Chart) return;
-
-                // 1. Trend Line Chart
-                const ctxTrend = document.getElementById('trendChart')?.getContext('2d');
-                if (ctxTrend) {
-                    new Chart(ctxTrend, {
-                        type: 'line',
-                        data: {
-                            labels: @json($trendLabels),
-                            datasets: [{
-                                label: 'Jumlah Kunjungan',
-                                data: @json($trendValues),
-                                borderColor: '#4f46e5',
-                                backgroundColor: 'rgba(79, 70, 229, 0.08)',
-                                fill: true,
-                                tension: 0.35,
-                                pointBackgroundColor: '#4f46e5',
-                                pointRadius: 4,
-                                pointHoverRadius: 6,
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: {
-                                    callbacks: {
-                                        label: (context) => ` ${context.parsed.y} Tamu`
-                                    }
-                                }
-                            },
-                            scales: {
-                                y: {
-                                    beginAtZero: true,
-                                    ticks: { precision: 0, stepSize: 1 }
-                                }
-                            }
-                        }
-                    });
-                }
-
-                // 2. Organization Category Donut Chart
-                const ctxOrg = document.getElementById('orgChart')?.getContext('2d');
-                if (ctxOrg) {
-                    new Chart(ctxOrg, {
-                        type: 'doughnut',
-                        data: {
-                            labels: @json($orgLabels),
-                            datasets: [{
-                                data: @json($orgValues),
-                                backgroundColor: [
-                                    '#3b82f6', // Pemerintah
-                                    '#f59e0b', // LSM/Ormas
-                                    '#10b981', // Akademisi
-                                    '#8b5cf6', // Umum/Swasta
-                                ],
-                                borderWidth: 2,
-                                borderColor: '#ffffff',
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: {
-                                    position: 'bottom',
-                                    labels: { boxWidth: 12, font: { size: 11 } }
-                                }
-                            },
-                            cutout: '65%',
-                        }
-                    });
-                }
-
-                // 3. Department Distribution Horizontal Bar Chart
-                const ctxDept = document.getElementById('deptChart')?.getContext('2d');
-                if (ctxDept) {
-                    new Chart(ctxDept, {
-                        type: 'bar',
-                        data: {
-                            labels: @json($deptLabels),
-                            datasets: [{
-                                label: 'Tamu 30 Hari Terakhir',
-                                data: @json($deptValues),
-                                backgroundColor: '#6366f1',
-                                borderRadius: 6,
-                            }]
-                        },
-                        options: {
-                            indexAxis: 'y',
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            plugins: {
-                                legend: { display: false },
-                            },
-                            scales: {
-                                x: {
-                                    beginAtZero: true,
-                                    ticks: { precision: 0 }
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-        }"
-        x-init="$nextTick(() => initCharts())"
-        class="space-y-6"
-    >
+    <div class="space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <!-- Chart 1: Trend 7 Hari (7 cols) -->
             <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-xs p-5 sm:p-6 space-y-3">
@@ -360,3 +248,128 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+(function() {
+    function initDashboardCharts() {
+        if (!window.Chart) {
+            setTimeout(initDashboardCharts, 50);
+            return;
+        }
+
+    // 1. Trend Line Chart
+    const ctxTrend = document.getElementById('trendChart')?.getContext('2d');
+    if (ctxTrend) {
+        new Chart(ctxTrend, {
+            type: 'line',
+            data: {
+                labels: @json($trendLabels),
+                datasets: [{
+                    label: 'Jumlah Kunjungan',
+                    data: @json($trendValues),
+                    borderColor: '#4f46e5',
+                    backgroundColor: 'rgba(79, 70, 229, 0.08)',
+                    fill: true,
+                    tension: 0.35,
+                    pointBackgroundColor: '#4f46e5',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return ' ' + context.parsed.y + ' Tamu';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { precision: 0, stepSize: 1 }
+                    }
+                }
+            }
+        });
+    }
+
+    // 2. Organization Category Donut Chart
+    const ctxOrg = document.getElementById('orgChart')?.getContext('2d');
+    if (ctxOrg) {
+        new Chart(ctxOrg, {
+            type: 'doughnut',
+            data: {
+                labels: @json($orgLabels),
+                datasets: [{
+                    data: @json($orgValues),
+                    backgroundColor: [
+                        '#3b82f6', // Pemerintah
+                        '#f59e0b', // LSM/Ormas
+                        '#10b981', // Akademisi
+                        '#8b5cf6', // Umum/Swasta
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { boxWidth: 12, font: { size: 11 } }
+                    }
+                },
+                cutout: '65%',
+            }
+        });
+    }
+
+    // 3. Department Distribution Horizontal Bar Chart
+    const ctxDept = document.getElementById('deptChart')?.getContext('2d');
+    if (ctxDept) {
+        new Chart(ctxDept, {
+            type: 'bar',
+            data: {
+                labels: @json($deptLabels),
+                datasets: [{
+                    label: 'Tamu 30 Hari Terakhir',
+                    data: @json($deptValues),
+                    backgroundColor: '#6366f1',
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: { precision: 0 }
+                    }
+                }
+            }
+        });
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDashboardCharts);
+} else {
+    initDashboardCharts();
+}
+})();
+</script>
+@endpush
