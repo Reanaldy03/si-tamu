@@ -9,7 +9,7 @@
 - **Project Name:** SI-TAMU (Sistem Informasi Buku Tamu Digital Berbasis Web)
 - **Architecture Style:** Modular Monolith (Laravel 11, PHP 8.3+, MySQL 8.x, Blade + Tailwind CSS + Alpine.js)
 - **Primary Actors:** Guest (Public, No Account), Staff (Front-Office), Admin (Back-Office)
-- **Current Sprint:** SPRINT-02 (Domain Layer & Business Rules)
+- **Current Sprint:** SPRINT-03 (Application Actions & Transaction Engine)
 - **Last Updated:** 2026-09-09
 
 ---
@@ -27,11 +27,11 @@
 - [x] Artisan bootstrap command (`php artisan sitamu:admin:create`)
 
 ### Sprint 2: Domain Layer & Business Rules
-- [ ] Backed Enums (`VisitStatus`, `RoleCode`, `RegistrationSource`, `ExportStatus`)
-- [ ] Domain Rules (`VisitStatusTransitionRule` state machine)
-- [ ] ULID Public ID Generator Contract & Implementation (`CHAR(26)`)
-- [ ] Eloquent Models with Relations, Enums, and Casts (`User`, `Role`, `Permission`, `Department`, `Visit`, `VisitStatusHistory`, `AuditLog`, `ReportExport`, `OrganizationSetting`)
-- [ ] Unit Tests for State Machine & ULID generation
+- [x] Backed Enums (`VisitStatus`, `RoleCode`, `RegistrationSource`, `ExportStatus`)
+- [x] Domain Rules (`VisitStatusTransitionRule` state machine)
+- [x] ULID Public ID Generator Contract & Implementation (`CHAR(26)`)
+- [x] Eloquent Models with Relations, Enums, and Casts (`User`, `Role`, `Permission`, `Department`, `Visit`, `VisitStatusHistory`, `AuditLog`, `ReportExport`, `OrganizationSetting`)
+- [x] Unit Tests for State Machine & ULID generation
 
 ### Sprint 3: Application Actions & Transaction Engine
 - [ ] `RegisterVisitAction` (Atomic Transaction: Idempotency token hash + Visit + StatusHistory + AuditLog)
@@ -103,7 +103,27 @@
   - `database/seeders/OrganizationSettingsSeeder.php`
   - `database/seeders/DatabaseSeeder.php`
   - `app/Console/Commands/CreateAdminCommand.php`
+  - `app/Domain/Visits/Enums/VisitStatus.php`
+  - `app/Domain/Access/Enums/RoleCode.php`
+  - `app/Domain/Visits/Enums/RegistrationSource.php`
+  - `app/Domain/Reporting/Enums/ExportStatus.php`
+  - `app/Domain/Visits/Rules/VisitStatusTransitionRule.php`
+  - `app/Domain/Visits/Exceptions/InvalidVisitStatusTransitionException.php`
+  - `app/Domain/Shared/Contracts/PublicIdGenerator.php`
+  - `app/Infrastructure/Identifiers/UlidPublicIdGenerator.php`
+  - `app/Models/User.php`
+  - `app/Models/Role.php`
+  - `app/Models/Permission.php`
+  - `app/Models/Department.php`
+  - `app/Models/Visit.php`
+  - `app/Models/VisitStatusHistory.php`
+  - `app/Models/AuditLog.php`
+  - `app/Models/ReportExport.php`
+  - `app/Models/OrganizationSetting.php`
   - `tests/Feature/Sprint1SetupTest.php`
-- **Last Verified Test:** `php artisan test` (6 passed, 45 assertions OK), `php vendor/bin/pint --test` (passed)
-- **Active Task:** SPRINT-02 (Domain Layer & Business Rules)
+  - `tests/Unit/Domain/VisitStatusTransitionRuleTest.php`
+  - `tests/Unit/Infrastructure/UlidPublicIdGeneratorTest.php`
+  - `tests/Feature/DomainModelRelationsAndCastsTest.php`
+- **Last Verified Test:** `php artisan test` (22 passed, 124 assertions OK), `php vendor/bin/pint --test` (passed)
+- **Active Task:** SPRINT-03 (Application Actions & Transaction Engine)
 - **Blockers / Open Questions:** None
