@@ -9,7 +9,7 @@
 - **Project Name:** SI-TAMU (Sistem Informasi Buku Tamu Digital Berbasis Web)
 - **Architecture Style:** Modular Monolith (Laravel 11, PHP 8.3+, MySQL 8.x, Blade + Tailwind CSS + Alpine.js)
 - **Primary Actors:** Guest (Public, No Account), Staff (Front-Office), Admin (Back-Office)
-- **Current Sprint:** SPRINT-07 (Master Data, User Management, Audit & Settings)
+- **Current Sprint:** SPRINT-09 (Quality Assurance, Security Polish & Production Checklist) — COMPLETED
 - **Last Updated:** 2026-09-09
 
 ---
