@@ -9,7 +9,7 @@
 - **Project Name:** SI-TAMU (Sistem Informasi Buku Tamu Digital Berbasis Web)
 - **Architecture Style:** Modular Monolith (Laravel 11, PHP 8.3+, MySQL 8.x, Blade + Tailwind CSS + Alpine.js)
 - **Primary Actors:** Guest (Public, No Account), Staff (Front-Office), Admin (Back-Office)
-- **Current Sprint:** SPRINT-06 (Back-Office Operations: Dashboard, Visits List & Detail)
+- **Current Sprint:** SPRINT-07 (Master Data, User Management, Audit & Settings)
 - **Last Updated:** 2026-09-09
 
 ---
@@ -54,12 +54,12 @@
 - [x] Feature Tests for Public Registration, Validation Errors & Duplicate Submission Prevention
 
 ### Sprint 6: Back-Office Operations (Dashboard, Visits List & Detail)
-- [ ] Shell Navigation `layouts/admin.blade.php` (Desktop sidebar, mobile drawer, topbar, role-aware navigation)
-- [ ] Operational Dashboard (`DashboardController`: 4 Metric Cards + Latest Visits)
-- [ ] Visits List (`VisitController@index`: URL query filters, date range, pagination, responsive cards)
-- [ ] Visit Detail (`VisitController@show`: Guest info, dynamic next status button, status history timeline)
-- [ ] Status Change Controller & Modals (`VisitStatusController@update`: Modal konfirmasi pembatalan)
-- [ ] Feature Tests for Full Front-Office Workflow
+- [x] Shell Navigation `layouts/admin.blade.php` (Desktop sidebar, mobile drawer, topbar, role-aware navigation)
+- [x] Operational Dashboard (`DashboardController`: 4 Metric Cards + Latest Visits)
+- [x] Visits List (`VisitController@index`: URL query filters, date range, pagination, responsive cards)
+- [x] Visit Detail (`VisitController@show`: Guest info, dynamic next status button, status history timeline)
+- [x] Status Change Controller & Modals (`VisitStatusController@update`: Modal konfirmasi pembatalan)
+- [x] Feature Tests for Full Front-Office Workflow
 
 ### Sprint 7: Master Data, User Management, Audit & Settings
 - [ ] Department Management (`DepartmentController`: CRUD + Soft-disable pattern)
@@ -144,6 +144,16 @@
   - `resources/views/public/registration/create.blade.php`
   - `resources/views/public/registration/success.blade.php`
   - `resources/js/app.js`
+  - `app/Http/Controllers/Controller.php`
+  - `app/Http/Requests/Admin/VisitSearchRequest.php`
+  - `app/Http/Requests/Admin/UpdateVisitStatusRequest.php`
+  - `app/Http/Controllers/Admin/DashboardController.php`
+  - `app/Http/Controllers/Admin/VisitController.php`
+  - `app/Http/Controllers/Admin/VisitStatusController.php`
+  - `resources/views/layouts/admin.blade.php`
+  - `resources/views/admin/dashboard.blade.php`
+  - `resources/views/admin/visits/index.blade.php`
+  - `resources/views/admin/visits/show.blade.php`
   - `routes/web.php`
   - `bootstrap/app.php`
   - `tests/TestCase.php`
@@ -158,7 +168,9 @@
   - `tests/Feature/Auth/AuthenticationTest.php`
   - `tests/Feature/Auth/PolicyAuthorizationTest.php`
   - `tests/Feature/Public/GuestRegistrationTest.php`
+  - `tests/Feature/Admin/DashboardTest.php`
+  - `tests/Feature/Admin/VisitManagementTest.php`
   - `tests/Feature/ExampleTest.php`
-- **Last Verified Test:** `php artisan test` (50 passed, 289 assertions OK), `php vendor/bin/pint --test` (passed), `npm run build` (passed)
-- **Active Task:** SPRINT-06 (Back-Office Operations: Dashboard, Visits List & Detail)
+- **Last Verified Test:** `php artisan test` (60 passed, 333 assertions OK), `php vendor/bin/pint --test` (passed), `npm run build` (passed)
+- **Active Task:** SPRINT-07 (Master Data, User Management, Audit & Settings)
 - **Blockers / Open Questions:** None

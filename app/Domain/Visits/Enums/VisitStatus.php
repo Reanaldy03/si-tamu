@@ -43,4 +43,15 @@ enum VisitStatus: string
     {
         return in_array($next, $this->allowedNextStatuses(), true);
     }
+
+    public function badgeClasses(): string
+    {
+        return match ($this) {
+            self::REGISTERED => 'bg-indigo-50 text-indigo-700 border-indigo-200',
+            self::ARRIVED => 'bg-amber-50 text-amber-700 border-amber-200',
+            self::IN_SERVICE => 'bg-sky-50 text-sky-700 border-sky-200',
+            self::COMPLETED => 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            self::CANCELLED => 'bg-rose-50 text-rose-700 border-rose-200',
+        };
+    }
 }

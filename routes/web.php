@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\VisitController;
+use App\Http\Controllers\Admin\VisitStatusController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Public\GuestRegistrationController;
 use Illuminate\Support\Facades\Route;
@@ -23,10 +26,8 @@ Route::post('/logout', [AuthController::class, 'destroy'])
 
 // Back-office protected routes
 Route::middleware(['auth', 'active.user'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/dashboard', function () {
-        return response()->json([
-            'message' => 'Selamat datang di dashboard SI-TAMU',
-            'user' => auth()->user()?->only(['id', 'public_id', 'name', 'email']),
-        ]);
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/visits', [VisitController::class, 'index'])->name('visits.index');
+    Route::get('/visits/{visit}', [VisitController::class, 'show'])->name('visits.show');
+    Route::patch('/visits/{visit}/status', [VisitStatusController::class, 'update'])->name('visits.status.update');
 });

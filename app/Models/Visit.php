@@ -100,4 +100,12 @@ class Visit extends Model
         return $this->hasOne(VisitStatusHistory::class, 'visit_id')
             ->latestOfMany('changed_at');
     }
+
+    /**
+     * Get the route key for implicit model binding.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
+    }
 }
