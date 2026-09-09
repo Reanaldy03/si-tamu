@@ -62,11 +62,11 @@
 - [x] Feature Tests for Full Front-Office Workflow
 
 ### Sprint 7: Master Data, User Management, Audit & Settings
-- [ ] Department Management (`DepartmentController`: CRUD + Soft-disable pattern)
-- [ ] User Management (`UserController`: CRUD + Active toggle + Self-protection rule)
-- [ ] Audit Log Viewer (`AuditController`: Read-only, filterable by actor/date/event)
-- [ ] Organization Settings (`OrganizationSettingsController`: Identity, branding logo upload, cache invalidation)
-- [ ] Feature Tests for Master Data & Audit Immutability
+- [x] Department Management (`DepartmentController`: CRUD + Soft-disable pattern)
+- [x] User Management (`UserController`: CRUD + Active toggle + Self-protection rule)
+- [x] Audit Log Viewer (`AuditController`: Read-only, filterable by actor/date/event)
+- [x] Organization Settings (`OrganizationSettingsController`: Identity, branding logo upload, cache invalidation)
+- [x] Feature Tests for Master Data & Audit Immutability
 
 ### Sprint 8: Reporting Engine & Ephemeral Export
 - [ ] Report Filter & Summary Preview (`ReportController`: Synchronous preview matching search filter)
@@ -137,6 +137,7 @@
   - `app/Policies/UserPolicy.php`
   - `app/Policies/ReportPolicy.php`
   - `app/Policies/OrganizationSettingPolicy.php`
+  - `app/Policies/AuditLogPolicy.php`
   - `resources/views/auth/login.blade.php`
   - `app/Http/Requests/Public/StoreGuestVisitRequest.php`
   - `app/Http/Controllers/Public/GuestRegistrationController.php`
@@ -154,6 +155,24 @@
   - `resources/views/admin/dashboard.blade.php`
   - `resources/views/admin/visits/index.blade.php`
   - `resources/views/admin/visits/show.blade.php`
+  - `app/Http/Requests/Admin/StoreDepartmentRequest.php`
+  - `app/Http/Requests/Admin/UpdateDepartmentRequest.php`
+  - `app/Http/Requests/Admin/StoreUserRequest.php`
+  - `app/Http/Requests/Admin/UpdateUserRequest.php`
+  - `app/Http/Requests/Admin/UpdateOrganizationSettingsRequest.php`
+  - `app/Http/Controllers/Admin/DepartmentController.php`
+  - `app/Http/Controllers/Admin/UserController.php`
+  - `app/Http/Controllers/Admin/AuditController.php`
+  - `app/Http/Controllers/Admin/OrganizationSettingsController.php`
+  - `resources/views/admin/departments/index.blade.php`
+  - `resources/views/admin/departments/create.blade.php`
+  - `resources/views/admin/departments/edit.blade.php`
+  - `resources/views/admin/users/index.blade.php`
+  - `resources/views/admin/users/create.blade.php`
+  - `resources/views/admin/users/edit.blade.php`
+  - `resources/views/admin/audits/index.blade.php`
+  - `resources/views/admin/audits/show.blade.php`
+  - `resources/views/admin/settings/edit.blade.php`
   - `routes/web.php`
   - `bootstrap/app.php`
   - `tests/TestCase.php`
@@ -170,7 +189,12 @@
   - `tests/Feature/Public/GuestRegistrationTest.php`
   - `tests/Feature/Admin/DashboardTest.php`
   - `tests/Feature/Admin/VisitManagementTest.php`
+  - `tests/Feature/Admin/DepartmentManagementTest.php`
+  - `tests/Feature/Admin/UserManagementTest.php`
+  - `tests/Feature/Admin/AuditLogViewerTest.php`
+  - `tests/Feature/Admin/OrganizationSettingsTest.php`
   - `tests/Feature/ExampleTest.php`
-- **Last Verified Test:** `php artisan test` (60 passed, 333 assertions OK), `php vendor/bin/pint --test` (passed), `npm run build` (passed)
-- **Active Task:** SPRINT-07 (Master Data, User Management, Audit & Settings)
+- **Last Verified Test:** `php artisan test` (87 passed, 425 assertions OK), `php vendor/bin/pint --test` (passed), `npm run build` (passed)
+- **Active Task:** SPRINT-08 (Reporting Engine & Ephemeral Export)
 - **Blockers / Open Questions:** None
+

@@ -142,4 +142,12 @@ class User extends Authenticatable
     {
         return $this->hasRole(RoleCode::STAFF);
     }
+
+    /**
+     * Get the route key for implicit model binding.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
+    }
 }

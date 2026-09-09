@@ -1,6 +1,10 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\DepartmentController;
+use App\Http\Controllers\Admin\OrganizationSettingsController;
+use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VisitController;
 use App\Http\Controllers\Admin\VisitStatusController;
 use App\Http\Controllers\Auth\AuthController;
@@ -30,4 +34,20 @@ Route::middleware(['auth', 'active.user'])->prefix('admin')->name('admin.')->gro
     Route::get('/visits', [VisitController::class, 'index'])->name('visits.index');
     Route::get('/visits/{visit}', [VisitController::class, 'show'])->name('visits.show');
     Route::patch('/visits/{visit}/status', [VisitStatusController::class, 'update'])->name('visits.status.update');
+
+    // Departments Management
+    Route::resource('departments', DepartmentController::class)->except(['show']);
+    Route::patch('departments/{department}/toggle-status', [DepartmentController::class, 'toggleStatus'])->name('departments.toggle-status');
+
+    // User Management
+    Route::resource('users', UserController::class)->except(['show', 'destroy']);
+    Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('users.toggle-status');
+
+    // Audit Logs (Read-only)
+    Route::get('audits', [AuditController::class, 'index'])->name('audits.index');
+    Route::get('audits/{audit}', [AuditController::class, 'show'])->name('audits.show');
+
+    // Organization Settings
+    Route::get('settings', [OrganizationSettingsController::class, 'edit'])->name('settings.edit');
+    Route::put('settings', [OrganizationSettingsController::class, 'update'])->name('settings.update');
 });

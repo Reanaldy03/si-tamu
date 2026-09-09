@@ -61,4 +61,12 @@ class Department extends Model
             ->orderBy('sort_order')
             ->orderBy('name');
     }
+
+    /**
+     * Get the route key for implicit model binding.
+     */
+    public function getRouteKeyName(): string
+    {
+        return 'public_id';
+    }
 }
