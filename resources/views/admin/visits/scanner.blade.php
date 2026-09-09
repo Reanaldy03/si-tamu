@@ -55,42 +55,6 @@ function qrScannerComponent() {
             this.loading = true;
 
             try {
-                // Step A: Preflight request
-                let preflightStream = null;
-                try {
-                    preflightStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                } finally {
-                    if (preflightStream) {
-                        preflightStream.getTracks().forEach(t => t.stop());
-                    }
-                }
-
-                // Step B: Query devices
-                const devices = await Html5Qrcode.getCameras();
-                if (!devices || devices.length === 0) {
-                    throw new Error('NOT_FOUND_NO_DEVICE');
-                }
-
-                this.cameras = devices;
-
-                const rgbCameras = devices.filter(d => {
-                    const lbl = (d.label || '').toLowerCase();
-                    return !lbl.includes('ir') && 
-                           !lbl.includes('infrared') && 
-                           !lbl.includes('windows hello') && 
-                           !lbl.includes('virtual');
-                });
-                const activePool = rgbCameras.length > 0 ? rgbCameras : devices;
-
-                if (!this.selectedCameraId || !devices.some(d => d.id === this.selectedCameraId)) {
-                    const backCam = activePool.find(d => {
-                        const lbl = (d.label || '').toLowerCase();
-                        return lbl.includes('back') || lbl.includes('belakang') || lbl.includes('environment');
-                    });
-                    this.selectedCameraId = backCam ? backCam.id : activePool[0].id;
-                }
-
-                // Step C: Reset scanner instance
                 if (this.qrScanner) {
                     try { await this.qrScanner.stop(); } catch (e) {}
                     try { this.qrScanner.clear(); } catch (e) {}
@@ -117,7 +81,36 @@ function qrScannerComponent() {
                     // Frame scan noise
                 };
 
-                await this.qrScanner.start(this.selectedCameraId, config, onScanSuccess, onScanError);
+                // If specific camera ID is selected, use it
+                if (this.selectedCameraId) {
+                    await this.qrScanner.start(this.selectedCameraId, config, onScanSuccess, onScanError);
+                } else {
+                    // Try facingMode user first (standard for laptop/webcam)
+                    try {
+                        await this.qrScanner.start({ facingMode: 'user' }, config, onScanSuccess, onScanError);
+                    } catch (userErr) {
+                        console.warn('Start facing user failed, trying environment...', userErr);
+                        await this.qrScanner.start({ facingMode: 'environment' }, config, onScanSuccess, onScanError);
+                    }
+
+                    // Query available cameras now that permission is active
+                    try {
+                        const devices = await Html5Qrcode.getCameras();
+                        if (devices && devices.length) {
+                            this.cameras = devices;
+                            const rgbCameras = devices.filter(d => {
+                                const lbl = (d.label || '').toLowerCase();
+                                return !lbl.includes('ir') && 
+                                       !lbl.includes('infrared') && 
+                                       !lbl.includes('windows hello') && 
+                                       !lbl.includes('virtual');
+                            });
+                            const pool = rgbCameras.length > 0 ? rgbCameras : devices;
+                            this.selectedCameraId = pool[0].id;
+                        }
+                    } catch (devErr) {}
+                }
+
                 this.scanning = true;
 
             } catch (err) {
@@ -128,11 +121,11 @@ function qrScannerComponent() {
                 const errMsg = String(err?.message || err);
 
                 if (errName === 'NotAllowedError' || errMsg.includes('Permission denied') || errMsg.includes('NotAllowedError')) {
-                    this.errorMessage = 'Izin kamera diblokir browser atau Windows. Lakukan langkah berikut: (1) Klik tombol Muat Ulang Halaman (F5) di bawah setelah mengubah izin di bilah alamat browser. (2) Pastikan juga Windows Settings > Privacy & Security > Camera > "Let desktop apps access your camera" dalam posisi ON.';
+                    this.errorMessage = 'Izin kamera diblokir browser atau Windows. Solusi: (1) Klik tombol "Reset izin" di ikon setelan URL browser Anda, lalu klik Muat Ulang Halaman (F5). (2) Pastikan di Windows Settings > Privacy & Security > Camera > "Let desktop apps access your camera" dalam posisi ON. [' + (errMsg || errName) + ']';
                 } else if (errName === 'NotFoundError' || errMsg.includes('Requested device not found') || errMsg.includes('NotFoundError') || errMsg.includes('NOT_FOUND_NO_DEVICE')) {
                     this.errorMessage = 'Tidak ada perangkat kamera fisik (webcam) yang terhubung pada komputer ini. Silakan gunakan tombol Unggah File QR atau formulir Input Manual ULID di sebelah kanan.';
                 } else if (errName === 'NotReadableError' || errMsg.includes('Could not start video source') || errMsg.includes('NotReadableError')) {
-                    this.errorMessage = 'Kamera sedang digunakan oleh aplikasi lain (Zoom, Google Meet, OBS, atau Kamera Windows). Tutup aplikasi tersebut lalu coba lagi.';
+                    this.errorMessage = 'Kamera sedang digunakan oleh aplikasi lain (Zoom, Google Meet, OBS, atau Kamera Windows). Tutup aplikasi tersebut lalu coba lagi. [' + (errMsg || errName) + ']';
                 } else {
                     this.errorMessage = 'Gagal mengakses kamera: ' + errMsg + '. Anda dapat menggunakan tombol Unggah File QR atau formulir Input Manual ULID.';
                 }
