@@ -70,14 +70,23 @@
 
                 this.cameras = devices;
 
-                // If user previously picked a camera or we have back camera, choose it, else default to first
+                // Prefer color RGB webcam over IR (Windows Hello infrared) or virtual cameras
+                const rgbCameras = devices.filter(d => {
+                    const lbl = (d.label || '').toLowerCase();
+                    return !lbl.includes('ir') && 
+                           !lbl.includes('infrared') && 
+                           !lbl.includes('windows hello') && 
+                           !lbl.includes('virtual');
+                });
+                const activePool = rgbCameras.length > 0 ? rgbCameras : devices;
+
+                // If user previously picked a camera or we have back camera, choose it, else default to first RGB camera
                 if (!this.selectedCameraId || !devices.some(d => d.id === this.selectedCameraId)) {
-                    const backCam = devices.find(d => 
-                        d.label.toLowerCase().includes('back') || 
-                        d.label.toLowerCase().includes('belakang') || 
-                        d.label.toLowerCase().includes('environment')
-                    );
-                    this.selectedCameraId = backCam ? backCam.id : devices[0].id;
+                    const backCam = activePool.find(d => {
+                        const lbl = (d.label || '').toLowerCase();
+                        return lbl.includes('back') || lbl.includes('belakang') || lbl.includes('environment');
+                    });
+                    this.selectedCameraId = backCam ? backCam.id : activePool[0].id;
                 }
 
                 // Step C: Safely stop and reset any previous scanner instance
@@ -87,10 +96,17 @@
                 }
                 this.qrScanner = new Html5Qrcode('qr-reader');
 
+                // Dynamic qrbox without forcing track hardware aspectRatio (prevents black video on laptop webcams)
                 const config = {
-                    fps: 10,
-                    qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0,
+                    fps: 15,
+                    qrbox: (viewfinderWidth, viewfinderHeight) => {
+                        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                        const edge = Math.floor(minEdge * 0.7);
+                        return {
+                            width: Math.max(160, Math.min(260, edge)),
+                            height: Math.max(160, Math.min(260, edge)),
+                        };
+                    },
                 };
 
                 const onScanSuccess = (decodedText) => {
@@ -132,6 +148,17 @@
                     await this.qrScanner.stop();
                 } catch (e) {}
                 this.scanning = false;
+            }
+        },
+
+        async switchCamera() {
+            if (this.cameras.length <= 1) return;
+            const currentIndex = this.cameras.findIndex(c => c.id === this.selectedCameraId);
+            const nextIndex = (currentIndex + 1) % this.cameras.length;
+            this.selectedCameraId = this.cameras[nextIndex].id;
+            if (this.scanning) {
+                await this.stopScanner();
+                await this.startScanner();
             }
         },
 
@@ -438,7 +465,7 @@
 
             <!-- Camera Controls -->
             <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <template x-if="scanning">
                         <button 
                             type="button" 
@@ -448,6 +475,20 @@
                             Hentikan Kamera
                         </button>
                     </template>
+
+                    <template x-if="scanning && cameras.length > 1">
+                        <button 
+                            type="button" 
+                            @click="switchCamera()" 
+                            class="px-3.5 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
+                        >
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            <span>Ganti Kamera</span>
+                        </button>
+                    </template>
+
                     <label class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer inline-flex items-center gap-1.5">
                         <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -461,6 +502,23 @@
                     Bisa scan kamera, upload file QR, atau input ULID manual.
                 </span>
             </div>
+
+            <!-- Dark Screen Troubleshooter Helper -->
+            <template x-if="scanning">
+                <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-start gap-2.5">
+                    <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                    <div class="space-y-1 text-[11px]">
+                        <p class="font-bold text-amber-950">Layar kamera gelap atau hitam?</p>
+                        <ul class="list-disc list-inside space-y-0.5 text-amber-800">
+                            <li>Periksa <strong>slider penutup fisik webcam</strong> di atas layar laptop Anda (pastikan digeser hingga lensa terbuka).</li>
+                            <li>Jika laptop Anda memiliki tombol fungsi kamera (contoh: <code>Fn + F6</code> atau <code>F10</code>), pastikan tidak dalam mode privasi nonaktif.</li>
+                            <li>Jika ada lebih dari satu kamera terdeteksi, klik tombol <strong>Ganti Kamera</strong> di atas.</li>
+                        </ul>
+                    </div>
+                </div>
+            </template>
         </div>
 
         <!-- Manual Input Fallback Section (5 cols) -->
@@ -516,3 +574,26 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<style>
+    #qr-reader {
+        width: 100% !important;
+        border: none !important;
+    }
+    #qr-reader video {
+        width: 100% !important;
+        height: auto !important;
+        max-height: 420px;
+        object-fit: cover;
+        border-radius: 0.75rem;
+    }
+    #qr-reader img {
+        margin: 0 auto;
+        border-radius: 0.75rem;
+    }
+    #qr-shaded-region {
+        border-color: rgba(99, 102, 241, 0.4) !important;
+    }
+</style>
+@endpush
