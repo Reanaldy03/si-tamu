@@ -24,49 +24,105 @@
                         this.cameras = devices;
                         this.selectedCameraId = devices[0].id;
                         // Prefer back/environment camera if available
-                        const backCam = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('belakang') || d.label.toLowerCase().includes('environment'));
+                        const backCam = devices.find(d => 
+                            d.label.toLowerCase().includes('back') || 
+                            d.label.toLowerCase().includes('belakang') || 
+                            d.label.toLowerCase().includes('environment')
+                        );
                         if (backCam) {
                             this.selectedCameraId = backCam.id;
                         }
                     }
                 } catch (e) {
-                    console.warn('Gagal memuat daftar kamera:', e);
+                    console.warn('Daftar kamera belum tersedia sebelum izin diberikan:', e);
                 }
             }
         },
 
         async startScanner() {
-            if (!this.selectedCameraId) {
-                this.errorMessage = 'Tidak ada kamera yang terdeteksi pada perangkat ini.';
+            this.errorMessage = '';
+            this.successResult = null;
+
+            // Check if mediaDevices API is supported (requires secure context)
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                this.errorMessage = 'Akses kamera tidak didukung atau diblokir oleh browser (memerlukan koneksi HTTPS atau http://localhost). Silakan gunakan tombol Unggah File QR atau formulir Input Manual ULID.';
                 return;
             }
 
-            this.errorMessage = '';
-            this.successResult = null;
-            this.scanning = true;
+            this.loading = true;
 
             try {
                 if (!this.qrScanner) {
                     this.qrScanner = new Html5Qrcode('qr-reader');
                 }
 
-                await this.qrScanner.start(
-                    this.selectedCameraId,
-                    {
-                        fps: 10,
-                        qrbox: { width: 250, height: 250 },
-                        aspectRatio: 1.0,
-                    },
-                    (decodedText) => {
-                        this.handleScanSuccess(decodedText);
-                    },
-                    (errorMessage) => {
-                        // ignore parse frame errors
+                // If already scanning, safely stop first
+                if (this.scanning) {
+                    try {
+                        await this.qrScanner.stop();
+                    } catch (e) {}
+                    this.scanning = false;
+                }
+
+                const config = {
+                    fps: 10,
+                    qrbox: { width: 250, height: 250 },
+                    aspectRatio: 1.0,
+                };
+
+                const onScanSuccess = (decodedText) => {
+                    this.handleScanSuccess(decodedText);
+                };
+
+                const onScanError = (errMsg) => {
+                    // ignore continuous scanning frame errors
+                };
+
+                // If specific camera ID is already known
+                if (this.selectedCameraId) {
+                    await this.qrScanner.start(this.selectedCameraId, config, onScanSuccess, onScanError);
+                } else {
+                    // Try back camera first; if fails on laptop webcam, try front/user camera
+                    try {
+                        await this.qrScanner.start({ facingMode: 'environment' }, config, onScanSuccess, onScanError);
+                    } catch (facingErr) {
+                        console.info('Kamera environment tidak ditemukan, mencoba kamera user/depan...');
+                        await this.qrScanner.start({ facingMode: 'user' }, config, onScanSuccess, onScanError);
                     }
-                );
+
+                    // Query available cameras now that permission has been granted
+                    try {
+                        const devices = await Html5Qrcode.getCameras();
+                        if (devices && devices.length) {
+                            this.cameras = devices;
+                            if (!this.selectedCameraId) {
+                                this.selectedCameraId = devices[0].id;
+                            }
+                        }
+                    } catch (devErr) {
+                        console.warn('Gagal membaca list kamera setelah permission:', devErr);
+                    }
+                }
+
+                this.scanning = true;
             } catch (err) {
                 this.scanning = false;
-                this.errorMessage = 'Gagal mengakses kamera: ' + (err?.message || err);
+                console.error('Kamera gagal dijalankan:', err);
+
+                const errName = err?.name || '';
+                const errMsg = String(err?.message || err);
+
+                if (errName === 'NotAllowedError' || errMsg.includes('Permission denied') || errMsg.includes('NotAllowedError')) {
+                    this.errorMessage = 'Izin kamera ditolak oleh browser. Silakan klik ikon gembok/kamera di sebelah kiri bilah alamat (URL bar) browser Anda, ubah izin Kamera menjadi \'Izinkan\' (Allow), lalu klik Nyalakan Kamera lagi.';
+                } else if (errName === 'NotFoundError' || errMsg.includes('Requested device not found') || errMsg.includes('NotFoundError') || errMsg.includes('No device')) {
+                    this.errorMessage = 'Tidak ada perangkat kamera fisik (webcam) yang terhubung pada komputer ini. Silakan gunakan tombol \'Unggah File QR\' atau formulir \'Input Manual ULID\' di sebelah kanan.';
+                } else if (errName === 'NotReadableError' || errMsg.includes('Could not start video source') || errMsg.includes('NotReadableError')) {
+                    this.errorMessage = 'Kamera sedang digunakan oleh aplikasi lain (Zoom, Google Meet, OBS, atau Kamera Windows). Tutup aplikasi tersebut lalu coba lagi.';
+                } else {
+                    this.errorMessage = 'Tidak dapat menyalakan kamera: ' + errMsg + '. Anda tetap dapat melakukan check-in via tombol Unggah File QR atau Input Manual ULID.';
+                }
+            } finally {
+                this.loading = false;
             }
         },
 
@@ -76,6 +132,51 @@
                     await this.qrScanner.stop();
                 } catch (e) {}
                 this.scanning = false;
+            }
+        },
+
+        async scanFileEvent(event) {
+            const file = event.target?.files?.[0];
+            if (file) {
+                await this.scanImageFile(file);
+            }
+            event.target.value = '';
+        },
+
+        async handleFileDrop(event) {
+            const file = event.dataTransfer?.files?.[0];
+            if (file && file.type.startsWith('image/')) {
+                await this.scanImageFile(file);
+            }
+        },
+
+        async scanImageFile(file) {
+            if (!file) return;
+
+            this.errorMessage = '';
+            this.successResult = null;
+            this.loading = true;
+
+            try {
+                if (!this.qrScanner) {
+                    this.qrScanner = new Html5Qrcode('qr-reader');
+                }
+
+                if (this.scanning) {
+                    await this.stopScanner();
+                }
+
+                const decodedText = await this.qrScanner.scanFile(file, true);
+                if (decodedText) {
+                    await this.handleScanSuccess(decodedText);
+                } else {
+                    this.errorMessage = 'QR Code tidak terdeteksi pada file gambar yang dipilih. Pastikan gambar jelas dan QR Code tidak terpotong.';
+                }
+            } catch (err) {
+                console.error('File scan error:', err);
+                this.errorMessage = 'Gagal membaca QR Code dari file gambar. Pastikan gambar memuat QR Code yang jelas atau gunakan formulir Input Manual ULID.';
+            } finally {
+                this.loading = false;
             }
         },
 
@@ -262,11 +363,15 @@
             </div>
 
             <!-- Viewfinder Area -->
-            <div class="relative bg-slate-950 rounded-2xl overflow-hidden min-h-[300px] flex items-center justify-center border-2 border-dashed border-slate-300">
+            <div 
+                class="relative bg-slate-950 rounded-2xl overflow-hidden min-h-[320px] flex items-center justify-center border-2 border-dashed border-slate-300 transition"
+                @drop.prevent="handleFileDrop($event)"
+                @dragover.prevent
+            >
                 <div id="qr-reader" class="w-full max-w-sm [&>video]:rounded-xl overflow-hidden"></div>
 
                 <template x-if="!scanning">
-                    <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white bg-slate-900/90 space-y-3">
+                    <div class="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white bg-slate-900/90 space-y-3.5">
                         <div class="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center">
                             <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
@@ -276,20 +381,31 @@
                         <div>
                             <p class="text-sm font-semibold">Kamera Belum Aktif</p>
                             <p class="text-xs text-slate-400 max-w-xs mt-0.5">
-                                Klik tombol di bawah untuk mengaktifkan pemindai kamera perangkat.
+                                Nyalakan kamera untuk scan langsung, atau unggah foto/screenshot QR tamu.
                             </p>
                         </div>
-                        <button 
-                            type="button" 
-                            @click="startScanner()" 
-                            class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-sm transition cursor-pointer flex items-center gap-2"
-                        >
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <span>Nyalakan Kamera</span>
-                        </button>
+                        <div class="flex flex-wrap items-center justify-center gap-2.5">
+                            <button 
+                                type="button" 
+                                @click="startScanner()" 
+                                :disabled="loading"
+                                class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white text-xs font-bold shadow-sm transition cursor-pointer flex items-center gap-2"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>Nyalakan Kamera</span>
+                            </button>
+
+                            <label class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-semibold shadow-sm transition cursor-pointer flex items-center gap-2">
+                                <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span>Unggah File QR</span>
+                                <input type="file" accept="image/*" class="hidden" @change="scanFileEvent($event)">
+                            </label>
+                        </div>
                     </div>
                 </template>
 
@@ -300,22 +416,28 @@
             </div>
 
             <!-- Camera Controls -->
-            <div class="flex items-center justify-between pt-1">
-                <template x-if="scanning">
-                    <button 
-                        type="button" 
-                        @click="stopScanner()" 
-                        class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer"
-                    >
-                        Hentikan Kamera
-                    </button>
-                </template>
-                <template x-if="!scanning">
-                    <span class="text-xs text-slate-400 italic">Kamera dalam status siaga</span>
-                </template>
+            <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                <div class="flex items-center gap-2">
+                    <template x-if="scanning">
+                        <button 
+                            type="button" 
+                            @click="stopScanner()" 
+                            class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer"
+                        >
+                            Hentikan Kamera
+                        </button>
+                    </template>
+                    <label class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer inline-flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Pindai File Gambar</span>
+                        <input type="file" accept="image/*" class="hidden" @change="scanFileEvent($event)">
+                    </label>
+                </div>
 
-                <span class="text-xs text-slate-500">
-                    Pastikan QR Code tegak lurus dan pencahayaan memadai.
+                <span class="text-[11px] text-slate-400">
+                    Bisa scan kamera, upload file QR, atau input ULID manual.
                 </span>
             </div>
         </div>
