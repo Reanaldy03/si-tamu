@@ -60,6 +60,55 @@
             </div>
         </div>
 
+        <!-- QR Code Section -->
+        @if(isset($qrSvg))
+        <div class="p-6 bg-slate-50 border-b border-slate-200 text-center flex flex-col items-center justify-center space-y-3">
+            <div class="p-3 bg-white rounded-2xl shadow-sm border border-slate-200 inline-block">
+                <div class="w-48 h-48 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full">
+                    {!! $qrSvg !!}
+                </div>
+            </div>
+            <div class="space-y-1">
+                <p class="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    QR Code Check-In Tamu
+                </p>
+                <p class="text-xs text-slate-500 max-w-xs">
+                    Tunjukkan QR Code ini ke kamera pemindai di meja resepsionis lobi Gedung DPRD Kota Binjai.
+                </p>
+            </div>
+            <div class="pt-1">
+                <a 
+                    href="{{ route('public.registration.ticket', ['publicId' => $visit->public_id]) }}" 
+                    target="_blank"
+                    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-xs transition"
+                >
+                    <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                    <span>Cetak Bukti Kunjungan / Unduh Tiket</span>
+                </a>
+            </div>
+        </div>
+        @endif
+
+        <!-- Completed Feedback Banner -->
+        @if($visit->current_status === \App\Domain\Visits\Enums\VisitStatus::COMPLETED)
+        <div class="p-4 bg-amber-50 border-b border-amber-200 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 text-xs text-amber-800">
+                <svg class="w-5 h-5 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                <span>Kunjungan Anda telah selesai. Berikan penilaian layanan kami untuk evaluasi Sekretariat DPRD.</span>
+            </div>
+            <a 
+                href="{{ route('public.feedback.create', ['publicId' => $visit->public_id]) }}" 
+                class="shrink-0 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs transition"
+            >
+                Isi Survei Kepuasan
+            </a>
+        </div>
+        @endif
+
         <!-- Ticket Body: Visit Details -->
         <div class="p-6 sm:p-7 space-y-4 text-sm divide-y divide-slate-100">
             <div class="flex justify-between items-center pb-3">
@@ -110,14 +159,23 @@
         <!-- Ticket Footer / Action Buttons -->
         <div class="p-6 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row gap-3 items-center justify-between">
             <p class="text-xs text-slate-500 text-center sm:text-left">
-                Tunjukkan nomor kunjungan ini kepada petugas jika diminta.
+                Tunjukkan QR code atau nomor kunjungan ini kepada petugas resepsionis di lobi.
             </p>
-            <a 
-                href="{{ route('public.registration.create') }}" 
-                class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold shadow-xs transition text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-                Selesai / Form Baru
-            </a>
+            <div class="flex items-center gap-2 w-full sm:w-auto">
+                <a 
+                    href="{{ route('public.registration.ticket', ['publicId' => $visit->public_id]) }}" 
+                    target="_blank"
+                    class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold shadow-xs transition text-center"
+                >
+                    Cetak Tiket
+                </a>
+                <a 
+                    href="{{ route('public.registration.create') }}" 
+                    class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs font-semibold shadow-xs transition text-center focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                    Form Baru
+                </a>
+            </div>
         </div>
     </div>
 </div>

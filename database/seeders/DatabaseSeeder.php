@@ -15,5 +15,9 @@ class DatabaseSeeder extends Seeder
             RoleAndPermissionSeeder::class,
             OrganizationSettingsSeeder::class,
         ]);
+
+        if (! app()->runningUnitTests()) {
+            $this->call(DepartmentSeeder::class);
+        }
     }
 }

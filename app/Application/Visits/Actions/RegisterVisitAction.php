@@ -4,6 +4,7 @@ namespace App\Application\Visits\Actions;
 
 use App\Application\Audit\Actions\RecordAuditEventAction;
 use App\Application\Visits\DTOs\RegisterVisitDTO;
+use App\Application\Visits\Services\VisitQrTokenService;
 use App\Domain\Shared\Contracts\PublicIdGenerator;
 use App\Domain\Visits\Enums\VisitStatus;
 use App\Models\Department;
@@ -16,6 +17,7 @@ class RegisterVisitAction
     public function __construct(
         protected PublicIdGenerator $publicIdGenerator,
         protected RecordAuditEventAction $recordAuditEvent,
+        protected VisitQrTokenService $qrTokenService,
     ) {}
 
     /**
@@ -38,14 +40,17 @@ class RegisterVisitAction
                 ->where('is_active', true)
                 ->firstOrFail();
 
-            // 3. Generate ULID public ID
+            // 3. Generate ULID public ID and cryptographic QR token hash
             $publicId = $this->publicIdGenerator->generate();
+            $rawToken = $this->qrTokenService->generateRawToken($publicId);
+            $qrTokenHash = $this->qrTokenService->hashToken($rawToken);
             $now = now();
 
             // 4. Create Visit record
             $visit = Visit::create([
                 'public_id' => $publicId,
                 'submission_token_hash' => $tokenHash,
+                'qr_token' => $qrTokenHash,
                 'visitor_name' => $dto->visitorName,
                 'origin_organization' => $dto->originOrganization,
                 'contact_phone' => $dto->contactPhone,

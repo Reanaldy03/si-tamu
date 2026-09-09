@@ -82,134 +82,44 @@
 - [x] Vite production assets build verification (`npm run build`)
 - [x] Deployment guide & README.md finalize
 
+### Phase 2 Extension: QR Code Check-In, Cetak Tiket & Survei IKM (DPRD Kota Binjai)
+- [x] Database Migrations:
+  - [x] `add_qr_token_to_visits_table` (`qr_token CHAR(64)`, `checked_in_at DATETIME(6)`)
+  - [x] `create_visit_feedback_table` (`rating`, `feedback_text`, `submitted_at`)
+- [x] Cryptographic QR Token Engine (`VisitQrTokenService` HMAC-SHA256 with `app.key`)
+- [x] Pure Vector SVG Generator (`simplesoftwareio/simple-qrcode`)
+- [x] Public Confirmation with High-Res QR Code (`public.registration.success`)
+- [x] Official Printable Visitor Pass with Kop Sekretariat DPRD Kota Binjai (`ticket-print.blade.php`)
+- [x] Back-Office Camera Scanner with Local `html5-qrcode` & Web Audio API chime (`admin/visits/scanner.blade.php`)
+- [x] Atomic Check-In Transaction Engine (`CheckInVisitViaQrAction` with `SELECT ... FOR UPDATE` & audit log)
+- [x] Official 8 Units Seeder (`DepartmentSeeder`: UMUM, PERSIDANGAN, WASGAR, PIMPINAN, KOMISI-A, KOMISI-B, KOMISI-C, FRAKSI)
+- [x] Official Branding & Identity (`OrganizationSettingsSeeder`: Jl. Veteran No. 1 Binjai)
+- [x] Public Guest Satisfaction Survey (`GuestFeedbackController` with 5-star interactive rating)
+- [x] Back-Office IKM Analytics & Feedback Review (`FeedbackController@index`)
+- [x] Interactive Chart.js Analytics on Operational Dashboard (Tren 7 Hari, Proporsi Asal Tamu, Distribusi Komisi/Bagian)
+- [x] Feature Tests (`VisitQrCheckInTest`, `GuestFeedbackTest`)
+
 ---
 
 ## 3. Active Context Snapshot (Diisi Oleh AI per Sesi)
 - **Completed Files:**
-  - `README.md`
-  - `database/migrations/0001_01_01_000000_create_users_table.php`
-  - `database/migrations/0001_01_01_000010_create_password_reset_tokens_table.php`
-  - `database/migrations/0001_01_01_000020_create_sessions_table.php`
-  - `database/migrations/2026_01_01_000100_create_roles_table.php`
-  - `database/migrations/2026_01_01_000110_create_permissions_table.php`
-  - `database/migrations/2026_01_01_000120_create_user_roles_table.php`
-  - `database/migrations/2026_01_01_000130_create_role_permissions_table.php`
-  - `database/migrations/2026_01_01_000200_create_departments_table.php`
-  - `database/migrations/2026_01_01_000300_create_organization_settings_table.php`
-  - `database/migrations/2026_01_01_000400_create_visits_table.php`
-  - `database/migrations/2026_01_01_000410_create_visit_status_history_table.php`
-  - `database/migrations/2026_01_01_000500_create_audit_logs_table.php`
-  - `database/migrations/2026_01_01_000600_create_report_exports_table.php`
-  - `database/seeders/RoleAndPermissionSeeder.php`
+  - All Sprint 1 - 9 files
+  - `database/migrations/2026_01_01_000420_add_qr_token_to_visits_table.php`
+  - `database/migrations/2026_01_01_000430_create_visit_feedback_table.php`
+  - `database/seeders/DepartmentSeeder.php`
   - `database/seeders/OrganizationSettingsSeeder.php`
-  - `database/seeders/DatabaseSeeder.php`
-  - `app/Console/Commands/CreateAdminCommand.php`
-  - `app/Domain/Visits/Enums/VisitStatus.php`
-  - `app/Domain/Access/Enums/RoleCode.php`
-  - `app/Domain/Visits/Enums/RegistrationSource.php`
-  - `app/Domain/Reporting/Enums/ExportStatus.php`
-  - `app/Domain/Visits/Rules/VisitStatusTransitionRule.php`
-  - `app/Domain/Visits/Exceptions/InvalidVisitStatusTransitionException.php`
-  - `app/Domain/Shared/Contracts/PublicIdGenerator.php`
-  - `app/Infrastructure/Identifiers/UlidPublicIdGenerator.php`
-  - `app/Models/User.php`
-  - `app/Models/Role.php`
-  - `app/Models/Permission.php`
-  - `app/Models/Department.php`
-  - `app/Models/Visit.php`
-  - `app/Models/VisitStatusHistory.php`
-  - `app/Models/AuditLog.php`
-  - `app/Models/ReportExport.php`
-  - `app/Models/OrganizationSetting.php`
-  - `app/Application/Visits/DTOs/RegisterVisitDTO.php`
-  - `app/Application/Visits/DTOs/ChangeVisitStatusDTO.php`
-  - `app/Application/Visits/DTOs/CorrectVisitDataDTO.php`
-  - `app/Application/Audit/Actions/RecordAuditEventAction.php`
-  - `app/Application/Visits/Actions/RegisterVisitAction.php`
-  - `app/Application/Visits/Actions/ChangeVisitStatusAction.php`
-  - `app/Application/Visits/Actions/CorrectVisitDataAction.php`
-  - `app/Http/Controllers/Auth/AuthController.php`
-  - `app/Http/Requests/Auth/LoginRequest.php`
-  - `app/Http/Middleware/EnsureUserIsActive.php`
-  - `app/Http/Middleware/AddSecurityHeaders.php`
-  - `app/Http/Middleware/AddRequestContext.php`
-  - `app/Policies/VisitPolicy.php`
-  - `app/Policies/DepartmentPolicy.php`
-  - `app/Policies/UserPolicy.php`
-  - `app/Policies/ReportPolicy.php`
-  - `app/Policies/OrganizationSettingPolicy.php`
-  - `app/Policies/AuditLogPolicy.php`
-  - `resources/views/auth/login.blade.php`
-  - `app/Http/Requests/Public/StoreGuestVisitRequest.php`
-  - `app/Http/Controllers/Public/GuestRegistrationController.php`
-  - `resources/views/layouts/public.blade.php`
-  - `resources/views/public/registration/create.blade.php`
-  - `resources/views/public/registration/success.blade.php`
-  - `resources/js/app.js`
-  - `app/Http/Controllers/Controller.php`
-  - `app/Http/Requests/Admin/VisitSearchRequest.php`
-  - `app/Http/Requests/Admin/UpdateVisitStatusRequest.php`
-  - `app/Http/Controllers/Admin/DashboardController.php`
-  - `app/Http/Controllers/Admin/VisitController.php`
-  - `app/Http/Controllers/Admin/VisitStatusController.php`
-  - `resources/views/layouts/admin.blade.php`
-  - `resources/views/admin/dashboard.blade.php`
-  - `resources/views/admin/visits/index.blade.php`
-  - `resources/views/admin/visits/show.blade.php`
-  - `app/Http/Requests/Admin/StoreDepartmentRequest.php`
-  - `app/Http/Requests/Admin/UpdateDepartmentRequest.php`
-  - `app/Http/Requests/Admin/StoreUserRequest.php`
-  - `app/Http/Requests/Admin/UpdateUserRequest.php`
-  - `app/Http/Requests/Admin/UpdateOrganizationSettingsRequest.php`
-  - `app/Http/Controllers/Admin/DepartmentController.php`
-  - `app/Http/Controllers/Admin/UserController.php`
-  - `app/Http/Controllers/Admin/AuditController.php`
-  - `app/Http/Controllers/Admin/OrganizationSettingsController.php`
-  - `resources/views/admin/departments/index.blade.php`
-  - `resources/views/admin/departments/create.blade.php`
-  - `resources/views/admin/departments/edit.blade.php`
-  - `resources/views/admin/users/index.blade.php`
-  - `resources/views/admin/users/create.blade.php`
-  - `resources/views/admin/users/edit.blade.php`
-  - `resources/views/admin/audits/index.blade.php`
-  - `resources/views/admin/audits/show.blade.php`
-  - `resources/views/admin/settings/edit.blade.php`
-  - `app/Application/Reporting/DTOs/ReportFilterDTO.php`
-  - `app/Application/Reporting/Queries/VisitReportQuery.php`
-  - `app/Application/Reporting/Services/FormulaSanitizer.php`
-  - `app/Application/Reporting/Writers/CsvReportWriter.php`
-  - `app/Application/Reporting/Writers/XlsxReportWriter.php`
-  - `app/Application/Reporting/Actions/ExportVisitsAction.php`
-  - `app/Http/Requests/Admin/ReportFilterRequest.php`
-  - `app/Http/Requests/Admin/ExportReportRequest.php`
-  - `app/Http/Controllers/Admin/ReportController.php`
-  - `app/Console/Commands/CleanupExpiredExportsCommand.php`
-  - `resources/views/admin/reports/index.blade.php`
-  - `routes/web.php`
-  - `routes/console.php`
-  - `bootstrap/app.php`
-  - `tests/TestCase.php`
-  - `tests/Feature/Sprint1SetupTest.php`
-  - `tests/Unit/Domain/VisitStatusTransitionRuleTest.php`
-  - `tests/Unit/Infrastructure/UlidPublicIdGeneratorTest.php`
-  - `tests/Feature/DomainModelRelationsAndCastsTest.php`
-  - `tests/Feature/Visits/RegisterVisitActionTest.php`
-  - `tests/Feature/Visits/ChangeVisitStatusActionTest.php`
-  - `tests/Feature/Visits/CorrectVisitDataActionTest.php`
-  - `tests/Feature/Audit/RecordAuditEventActionTest.php`
-  - `tests/Feature/Auth/AuthenticationTest.php`
-  - `tests/Feature/Auth/PolicyAuthorizationTest.php`
-  - `tests/Feature/Public/GuestRegistrationTest.php`
-  - `tests/Feature/Admin/DashboardTest.php`
-  - `tests/Feature/Admin/VisitManagementTest.php`
-  - `tests/Feature/Admin/DepartmentManagementTest.php`
-  - `tests/Feature/Admin/UserManagementTest.php`
-  - `tests/Feature/Admin/AuditLogViewerTest.php`
-  - `tests/Feature/Admin/OrganizationSettingsTest.php`
-  - `tests/Feature/Admin/ReportAndExportTest.php`
-  - `tests/Feature/SecuritySmokeTest.php`
-  - `tests/Feature/BlackBoxAcceptanceTest.php`
-  - `tests/Feature/ExampleTest.php`
-- **Last Verified Test:** `php artisan test` (126 passed, 573 assertions OK), `php vendor/bin/pint --test` (passed), `npm run build` (passed)
-- **Active Task:** ALL SPRINTS COMPLETED (Ready for Pilot & Production Deployment)
+  - `app/Models/VisitFeedback.php`
+  - `app/Application/Visits/Services/VisitQrTokenService.php`
+  - `app/Application/Visits/Actions/CheckInVisitViaQrAction.php`
+  - `app/Http/Controllers/Admin/VisitCheckInController.php`
+  - `app/Http/Controllers/Admin/FeedbackController.php`
+  - `app/Http/Controllers/Public/GuestFeedbackController.php`
+  - `resources/views/public/registration/ticket-print.blade.php`
+  - `resources/views/public/feedback/create.blade.php`
+  - `resources/views/admin/visits/scanner.blade.php`
+  - `resources/views/admin/feedback/index.blade.php`
+  - `tests/Feature/Visits/VisitQrCheckInTest.php`
+  - `tests/Feature/Public/GuestFeedbackTest.php`
+- **Last Verified Test:** `php artisan test` (138 passed, 630 assertions OK), `php vendor/bin/pint --test` (passed), `npm run build` (passed)
+- **Active Task:** SISTEM 100% SELESAI (DPRD KOTA BINJAI READY)
 - **Blockers / Open Questions:** None

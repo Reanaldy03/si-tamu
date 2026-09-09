@@ -43,6 +43,8 @@ class Visit extends Model
         'current_status',
         'registration_source',
         'created_by_user_id',
+        'qr_token',
+        'checked_in_at',
         'registered_at',
         'status_updated_at',
     ];
@@ -59,6 +61,7 @@ class Visit extends Model
             'registration_source' => RegistrationSource::class,
             'party_size' => 'integer',
             'visitor_identity_encrypted' => 'encrypted',
+            'checked_in_at' => 'immutable_datetime',
             'registered_at' => 'immutable_datetime',
             'status_updated_at' => 'immutable_datetime',
             'created_at' => 'immutable_datetime',
@@ -99,6 +102,14 @@ class Visit extends Model
     {
         return $this->hasOne(VisitStatusHistory::class, 'visit_id')
             ->latestOfMany('changed_at');
+    }
+
+    /**
+     * Feedback submitted by the guest for this visit, if any.
+     */
+    public function feedback(): HasOne
+    {
+        return $this->hasOne(VisitFeedback::class, 'visit_id');
     }
 
     /**

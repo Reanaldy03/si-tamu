@@ -198,7 +198,7 @@ class DomainModelRelationsAndCastsTest extends TestCase
 
         $this->assertNotNull($setting);
         $this->assertSame(1, $setting->id);
-        $this->assertSame('Nama Instansi', $setting->organization_name);
+        $this->assertSame('Sekretariat DPRD Kota Binjai', $setting->organization_name);
         $this->assertSame('Asia/Jakarta', $setting->timezone);
         $this->assertIsArray($setting->registration_form_config);
         $this->assertArrayHasKey('contact_phone', $setting->registration_form_config);

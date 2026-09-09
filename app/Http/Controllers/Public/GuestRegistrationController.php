@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Application\Visits\Actions\RegisterVisitAction;
 use App\Application\Visits\DTOs\RegisterVisitDTO;
+use App\Application\Visits\Services\VisitQrTokenService;
 use App\Domain\Visits\Enums\RegistrationSource;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Public\StoreGuestVisitRequest;
@@ -66,11 +67,28 @@ class GuestRegistrationController extends Controller
     /**
      * Display the registration confirmation and receipt.
      */
-    public function success(string $publicId): View
+    public function success(string $publicId, VisitQrTokenService $qrTokenService): View
     {
         $visit = Visit::where('public_id', $publicId)->firstOrFail();
         $organization = OrganizationSetting::current();
 
-        return view('public.registration.success', compact('visit', 'organization'));
+        $qrPayload = $qrTokenService->generateQrPayload($visit);
+        $qrSvg = $qrTokenService->renderSvg($qrPayload, 200);
+
+        return view('public.registration.success', compact('visit', 'organization', 'qrSvg'));
+    }
+
+    /**
+     * Display printable visitor pass / ticket with official DPRD Kota Binjai kop.
+     */
+    public function printTicket(string $publicId, VisitQrTokenService $qrTokenService): View
+    {
+        $visit = Visit::where('public_id', $publicId)->firstOrFail();
+        $organization = OrganizationSetting::current();
+
+        $qrPayload = $qrTokenService->generateQrPayload($visit);
+        $qrSvg = $qrTokenService->renderSvg($qrPayload, 220);
+
+        return view('public.registration.ticket-print', compact('visit', 'organization', 'qrSvg'));
     }
 }
