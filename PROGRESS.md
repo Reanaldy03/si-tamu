@@ -41,10 +41,10 @@
 - [x] Feature Tests for Transaction Boundaries & Rollback Integrity
 
 ### Sprint 4: Authentication, Policies & Security Middlewares
-- [ ] Back-office Session Authentication (`AuthController`: Login, Logout, Rate Limiting, Session Regeneration)
-- [ ] Granular Authorization Policies (`VisitPolicy`, `DepartmentPolicy`, `UserPolicy`, `ReportPolicy`, `OrganizationSettingPolicy`)
-- [ ] Custom Middlewares (`EnsureUserIsActive`, `AddSecurityHeaders`, `AddRequestContext`)
-- [ ] Authorization Feature Tests (Verifikasi STAFF ditolak 403 untuk akses Admin)
+- [x] Back-office Session Authentication (`AuthController`: Login, Logout, Rate Limiting, Session Regeneration)
+- [x] Granular Authorization Policies (`VisitPolicy`, `DepartmentPolicy`, `UserPolicy`, `ReportPolicy`, `OrganizationSettingPolicy`)
+- [x] Custom Middlewares (`EnsureUserIsActive`, `AddSecurityHeaders`, `AddRequestContext`)
+- [x] Authorization Feature Tests (Verifikasi STAFF ditolak 403 untuk akses Admin)
 
 ### Sprint 5: Public Guest Registration Flow
 - [ ] `GuestRegistrationController` & `StoreGuestVisitRequest` (Validation & Sanitization)
@@ -73,7 +73,7 @@
 - [ ] Ephemeral Export Engine (`ExportVisitsAction`: Streamed CSV / XLSX adapter, memory-efficient chunking, formula injection sanitization)
 - [ ] Export Lifecycle Management (`report_exports` metadata tracking)
 - [ ] Scheduled Export Cleanup Job (`php artisan sitamu:exports:cleanup`)
-- [ ] Feature Tests for Export Permissions, Formula Sanitization & Date Boundary Consistency
+- [ ] Feature Tests for Export Lifecycle & Integrity
 
 ### Sprint 9: Quality Assurance, Security Polish & Production Checklist
 - [ ] 23 Black-Box Test Scenarios (PRD.md FR-001 - FR-017)
@@ -127,6 +127,20 @@
   - `app/Application/Visits/Actions/RegisterVisitAction.php`
   - `app/Application/Visits/Actions/ChangeVisitStatusAction.php`
   - `app/Application/Visits/Actions/CorrectVisitDataAction.php`
+  - `app/Http/Controllers/Auth/AuthController.php`
+  - `app/Http/Requests/Auth/LoginRequest.php`
+  - `app/Http/Middleware/EnsureUserIsActive.php`
+  - `app/Http/Middleware/AddSecurityHeaders.php`
+  - `app/Http/Middleware/AddRequestContext.php`
+  - `app/Policies/VisitPolicy.php`
+  - `app/Policies/DepartmentPolicy.php`
+  - `app/Policies/UserPolicy.php`
+  - `app/Policies/ReportPolicy.php`
+  - `app/Policies/OrganizationSettingPolicy.php`
+  - `resources/views/auth/login.blade.php`
+  - `routes/web.php`
+  - `bootstrap/app.php`
+  - `tests/TestCase.php`
   - `tests/Feature/Sprint1SetupTest.php`
   - `tests/Unit/Domain/VisitStatusTransitionRuleTest.php`
   - `tests/Unit/Infrastructure/UlidPublicIdGeneratorTest.php`
@@ -135,6 +149,8 @@
   - `tests/Feature/Visits/ChangeVisitStatusActionTest.php`
   - `tests/Feature/Visits/CorrectVisitDataActionTest.php`
   - `tests/Feature/Audit/RecordAuditEventActionTest.php`
-- **Last Verified Test:** `php artisan test` (32 passed, 182 assertions OK), `php vendor/bin/pint --test` (passed)
-- **Active Task:** SPRINT-04 (Authentication, Policies & Security Middlewares)
+  - `tests/Feature/Auth/AuthenticationTest.php`
+  - `tests/Feature/Auth/PolicyAuthorizationTest.php`
+- **Last Verified Test:** `php artisan test` (44 passed, 244 assertions OK), `php vendor/bin/pint --test` (passed)
+- **Active Task:** SPRINT-05 (Public Guest Registration Flow)
 - **Blockers / Open Questions:** None
