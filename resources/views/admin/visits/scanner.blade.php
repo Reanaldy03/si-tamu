@@ -5,8 +5,9 @@
 @section('page-title', 'Pemindai QR Code & Check-In')
 
 @section('content')
-<div 
-    x-data="{
+<script>
+function qrScannerComponent() {
+    return {
         scanning: false,
         loading: false,
         qrScanner: null,
@@ -22,19 +23,22 @@
                     const devices = await Html5Qrcode.getCameras();
                     if (devices && devices.length) {
                         this.cameras = devices;
-                        this.selectedCameraId = devices[0].id;
-                        // Prefer back/environment camera if available
-                        const backCam = devices.find(d => 
-                            d.label.toLowerCase().includes('back') || 
-                            d.label.toLowerCase().includes('belakang') || 
-                            d.label.toLowerCase().includes('environment')
-                        );
-                        if (backCam) {
-                            this.selectedCameraId = backCam.id;
-                        }
+                        const rgbCameras = devices.filter(d => {
+                            const lbl = (d.label || '').toLowerCase();
+                            return !lbl.includes('ir') && 
+                                   !lbl.includes('infrared') && 
+                                   !lbl.includes('windows hello') && 
+                                   !lbl.includes('virtual');
+                        });
+                        const pool = rgbCameras.length > 0 ? rgbCameras : devices;
+                        const backCam = pool.find(d => {
+                            const lbl = (d.label || '').toLowerCase();
+                            return lbl.includes('back') || lbl.includes('belakang') || lbl.includes('environment');
+                        });
+                        this.selectedCameraId = backCam ? backCam.id : pool[0].id;
                     }
                 } catch (e) {
-                    console.warn('Daftar kamera belum tersedia sebelum izin diberikan:', e);
+                    // Silently ignore before permission granted
                 }
             }
         },
@@ -43,16 +47,15 @@
             this.errorMessage = '';
             this.successResult = null;
 
-            // Check if mediaDevices API is supported (requires secure context localhost or https)
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                this.errorMessage = 'Akses kamera tidak didukung atau diblokir oleh browser (memerlukan koneksi HTTPS atau http://localhost). Silakan gunakan tombol Unggah File QR atau formulir Input Manual ULID.';
+                this.errorMessage = 'Akses kamera tidak didukung atau diblokir oleh browser. Pastikan URL dibuka melalui http://localhost:8000 atau HTTPS.';
                 return;
             }
 
             this.loading = true;
 
             try {
-                // Step A: Preflight getUserMedia with simple { video: true } to trigger prompt & verify OS/browser permission
+                // Step A: Preflight request
                 let preflightStream = null;
                 try {
                     preflightStream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -62,7 +65,7 @@
                     }
                 }
 
-                // Step B: Query available camera devices now that permission is active
+                // Step B: Query devices
                 const devices = await Html5Qrcode.getCameras();
                 if (!devices || devices.length === 0) {
                     throw new Error('NOT_FOUND_NO_DEVICE');
@@ -70,7 +73,6 @@
 
                 this.cameras = devices;
 
-                // Prefer color RGB webcam over IR (Windows Hello infrared) or virtual cameras
                 const rgbCameras = devices.filter(d => {
                     const lbl = (d.label || '').toLowerCase();
                     return !lbl.includes('ir') && 
@@ -80,7 +82,6 @@
                 });
                 const activePool = rgbCameras.length > 0 ? rgbCameras : devices;
 
-                // If user previously picked a camera or we have back camera, choose it, else default to first RGB camera
                 if (!this.selectedCameraId || !devices.some(d => d.id === this.selectedCameraId)) {
                     const backCam = activePool.find(d => {
                         const lbl = (d.label || '').toLowerCase();
@@ -89,14 +90,13 @@
                     this.selectedCameraId = backCam ? backCam.id : activePool[0].id;
                 }
 
-                // Step C: Safely stop and reset any previous scanner instance
+                // Step C: Reset scanner instance
                 if (this.qrScanner) {
                     try { await this.qrScanner.stop(); } catch (e) {}
                     try { this.qrScanner.clear(); } catch (e) {}
                 }
                 this.qrScanner = new Html5Qrcode('qr-reader');
 
-                // Dynamic qrbox without forcing track hardware aspectRatio (prevents black video on laptop webcams)
                 const config = {
                     fps: 15,
                     qrbox: (viewfinderWidth, viewfinderHeight) => {
@@ -114,10 +114,9 @@
                 };
 
                 const onScanError = (errMsg) => {
-                    // continuous frame scanning noise, ignore
+                    // Frame scan noise
                 };
 
-                // Step D: Start scanner directly using verified camera device ID
                 await this.qrScanner.start(this.selectedCameraId, config, onScanSuccess, onScanError);
                 this.scanning = true;
 
@@ -129,13 +128,13 @@
                 const errMsg = String(err?.message || err);
 
                 if (errName === 'NotAllowedError' || errMsg.includes('Permission denied') || errMsg.includes('NotAllowedError')) {
-                    this.errorMessage = 'Izin kamera diblokir browser atau Windows. Lakukan langkah berikut: (1) Klik tombol Muat Ulang Halaman (F5) di bawah ini setelah mengubah izin di bilah alamat browser. (2) Jika masih terkunci, pastikan setelan Windows Settings > Privacy & Security > Camera > "Let desktop apps access your camera" dalam posisi ON.';
+                    this.errorMessage = 'Izin kamera diblokir browser atau Windows. Lakukan langkah berikut: (1) Klik tombol Muat Ulang Halaman (F5) di bawah setelah mengubah izin di bilah alamat browser. (2) Pastikan juga Windows Settings > Privacy & Security > Camera > "Let desktop apps access your camera" dalam posisi ON.';
                 } else if (errName === 'NotFoundError' || errMsg.includes('Requested device not found') || errMsg.includes('NotFoundError') || errMsg.includes('NOT_FOUND_NO_DEVICE')) {
-                    this.errorMessage = 'Tidak ada perangkat kamera fisik (webcam) yang terhubung pada komputer ini. Silakan gunakan tombol \'Unggah File QR\' atau formulir \'Input Manual ULID\' di sebelah kanan.';
+                    this.errorMessage = 'Tidak ada perangkat kamera fisik (webcam) yang terhubung pada komputer ini. Silakan gunakan tombol Unggah File QR atau formulir Input Manual ULID di sebelah kanan.';
                 } else if (errName === 'NotReadableError' || errMsg.includes('Could not start video source') || errMsg.includes('NotReadableError')) {
                     this.errorMessage = 'Kamera sedang digunakan oleh aplikasi lain (Zoom, Google Meet, OBS, atau Kamera Windows). Tutup aplikasi tersebut lalu coba lagi.';
                 } else {
-                    this.errorMessage = 'Gagal mengakses kamera: ' + errMsg + '. Anda dapat menggunakan tombol \'Unggah File QR\' atau formulir \'Input Manual ULID\'.';
+                    this.errorMessage = 'Gagal mengakses kamera: ' + errMsg + '. Anda dapat menggunakan tombol Unggah File QR atau formulir Input Manual ULID.';
                 }
             } finally {
                 this.loading = false;
@@ -208,13 +207,9 @@
         },
 
         async handleScanSuccess(payload) {
-            // Stop scanning immediately upon read to prevent repeat calls
             await this.stopScanner();
-
-            // Play audio chime and haptic feedback
             if (window.playBeep) window.playBeep(960, 180);
             if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
-
             this.submitCheckIn(payload);
         },
 
@@ -230,7 +225,7 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']').getAttribute('content'),
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                         'Accept': 'application/json',
                     },
                     body: JSON.stringify({ payload: payloadText })
@@ -258,7 +253,12 @@
             }
             this.submitCheckIn(this.manualInput.trim());
         }
-    }"
+    };
+}
+</script>
+
+<div 
+    x-data="qrScannerComponent()"
     class="max-w-4xl mx-auto space-y-6"
 >
     <!-- Header Card -->
