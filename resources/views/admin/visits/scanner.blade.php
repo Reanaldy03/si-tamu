@@ -43,7 +43,7 @@
             this.errorMessage = '';
             this.successResult = null;
 
-            // Check if mediaDevices API is supported (requires secure context)
+            // Check if mediaDevices API is supported (requires secure context localhost or https)
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 this.errorMessage = 'Akses kamera tidak didukung atau diblokir oleh browser (memerlukan koneksi HTTPS atau http://localhost). Silakan gunakan tombol Unggah File QR atau formulir Input Manual ULID.';
                 return;
@@ -52,17 +52,40 @@
             this.loading = true;
 
             try {
-                if (!this.qrScanner) {
-                    this.qrScanner = new Html5Qrcode('qr-reader');
+                // Step A: Preflight getUserMedia with simple { video: true } to trigger prompt & verify OS/browser permission
+                let preflightStream = null;
+                try {
+                    preflightStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                } finally {
+                    if (preflightStream) {
+                        preflightStream.getTracks().forEach(t => t.stop());
+                    }
                 }
 
-                // If already scanning, safely stop first
-                if (this.scanning) {
-                    try {
-                        await this.qrScanner.stop();
-                    } catch (e) {}
-                    this.scanning = false;
+                // Step B: Query available camera devices now that permission is active
+                const devices = await Html5Qrcode.getCameras();
+                if (!devices || devices.length === 0) {
+                    throw new Error('NOT_FOUND_NO_DEVICE');
                 }
+
+                this.cameras = devices;
+
+                // If user previously picked a camera or we have back camera, choose it, else default to first
+                if (!this.selectedCameraId || !devices.some(d => d.id === this.selectedCameraId)) {
+                    const backCam = devices.find(d => 
+                        d.label.toLowerCase().includes('back') || 
+                        d.label.toLowerCase().includes('belakang') || 
+                        d.label.toLowerCase().includes('environment')
+                    );
+                    this.selectedCameraId = backCam ? backCam.id : devices[0].id;
+                }
+
+                // Step C: Safely stop and reset any previous scanner instance
+                if (this.qrScanner) {
+                    try { await this.qrScanner.stop(); } catch (e) {}
+                    try { this.qrScanner.clear(); } catch (e) {}
+                }
+                this.qrScanner = new Html5Qrcode('qr-reader');
 
                 const config = {
                     fps: 10,
@@ -75,36 +98,13 @@
                 };
 
                 const onScanError = (errMsg) => {
-                    // ignore continuous scanning frame errors
+                    // continuous frame scanning noise, ignore
                 };
 
-                // If specific camera ID is already known
-                if (this.selectedCameraId) {
-                    await this.qrScanner.start(this.selectedCameraId, config, onScanSuccess, onScanError);
-                } else {
-                    // Try back camera first; if fails on laptop webcam, try front/user camera
-                    try {
-                        await this.qrScanner.start({ facingMode: 'environment' }, config, onScanSuccess, onScanError);
-                    } catch (facingErr) {
-                        console.info('Kamera environment tidak ditemukan, mencoba kamera user/depan...');
-                        await this.qrScanner.start({ facingMode: 'user' }, config, onScanSuccess, onScanError);
-                    }
-
-                    // Query available cameras now that permission has been granted
-                    try {
-                        const devices = await Html5Qrcode.getCameras();
-                        if (devices && devices.length) {
-                            this.cameras = devices;
-                            if (!this.selectedCameraId) {
-                                this.selectedCameraId = devices[0].id;
-                            }
-                        }
-                    } catch (devErr) {
-                        console.warn('Gagal membaca list kamera setelah permission:', devErr);
-                    }
-                }
-
+                // Step D: Start scanner directly using verified camera device ID
+                await this.qrScanner.start(this.selectedCameraId, config, onScanSuccess, onScanError);
                 this.scanning = true;
+
             } catch (err) {
                 this.scanning = false;
                 console.error('Kamera gagal dijalankan:', err);
@@ -113,13 +113,13 @@
                 const errMsg = String(err?.message || err);
 
                 if (errName === 'NotAllowedError' || errMsg.includes('Permission denied') || errMsg.includes('NotAllowedError')) {
-                    this.errorMessage = 'Izin kamera ditolak oleh browser. Silakan klik ikon gembok/kamera di sebelah kiri bilah alamat (URL bar) browser Anda, ubah izin Kamera menjadi \'Izinkan\' (Allow), lalu klik Nyalakan Kamera lagi.';
-                } else if (errName === 'NotFoundError' || errMsg.includes('Requested device not found') || errMsg.includes('NotFoundError') || errMsg.includes('No device')) {
+                    this.errorMessage = 'Izin kamera diblokir browser atau Windows. Lakukan langkah berikut: (1) Klik tombol Muat Ulang Halaman (F5) di bawah ini setelah mengubah izin di bilah alamat browser. (2) Jika masih terkunci, pastikan setelan Windows Settings > Privacy & Security > Camera > "Let desktop apps access your camera" dalam posisi ON.';
+                } else if (errName === 'NotFoundError' || errMsg.includes('Requested device not found') || errMsg.includes('NotFoundError') || errMsg.includes('NOT_FOUND_NO_DEVICE')) {
                     this.errorMessage = 'Tidak ada perangkat kamera fisik (webcam) yang terhubung pada komputer ini. Silakan gunakan tombol \'Unggah File QR\' atau formulir \'Input Manual ULID\' di sebelah kanan.';
                 } else if (errName === 'NotReadableError' || errMsg.includes('Could not start video source') || errMsg.includes('NotReadableError')) {
                     this.errorMessage = 'Kamera sedang digunakan oleh aplikasi lain (Zoom, Google Meet, OBS, atau Kamera Windows). Tutup aplikasi tersebut lalu coba lagi.';
                 } else {
-                    this.errorMessage = 'Tidak dapat menyalakan kamera: ' + errMsg + '. Anda tetap dapat melakukan check-in via tombol Unggah File QR atau Input Manual ULID.';
+                    this.errorMessage = 'Gagal mengakses kamera: ' + errMsg + '. Anda dapat menggunakan tombol \'Unggah File QR\' atau formulir \'Input Manual ULID\'.';
                 }
             } finally {
                 this.loading = false;
@@ -265,9 +265,30 @@
             <svg class="w-5 h-5 text-rose-500 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
             </svg>
-            <div class="flex-1">
-                <span class="font-semibold block">Gagal Check-In</span>
-                <span x-text="errorMessage"></span>
+            <div class="flex-1 space-y-2.5">
+                <div>
+                    <span class="font-semibold block">Kendala Akses Kamera</span>
+                    <span x-text="errorMessage"></span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 pt-0.5">
+                    <button 
+                        type="button" 
+                        @click="window.location.reload()" 
+                        class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition cursor-pointer flex items-center gap-1.5"
+                    >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                        <span>Muat Ulang Halaman (F5)</span>
+                    </button>
+                    <label class="px-3.5 py-1.5 rounded-lg bg-white border border-rose-300 hover:bg-rose-100 text-rose-700 text-xs font-semibold shadow-xs transition cursor-pointer flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Gunakan Unggah File QR</span>
+                        <input type="file" accept="image/*" class="hidden" @change="scanFileEvent($event)">
+                    </label>
+                </div>
             </div>
             <button type="button" @click="errorMessage = ''" class="text-rose-500 hover:text-rose-700 cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
