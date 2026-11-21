@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // TLS diterminasi Caddy di depan; tanpa ini Laravel mengira skema http.
+        $middleware->trustProxies(at: '*');
+
         $middleware->append(AddSecurityHeaders::class);
         $middleware->append(AddRequestContext::class);
 
